@@ -1,5 +1,10 @@
 pipeline {
     agent any
+    environment {
+        JAVA_HOME  = "${tool 'JDK_21'}"          // must now resolve to the Temurin 21 install
+        MAVEN_HOME = "${tool 'Maven_3.9.9'}"
+        PATH       = "${MAVEN_HOME}/bin:${JAVA_HOME}/bin:${env.PATH}"
+    }
     options {
         skipStagesAfterUnstable()
     }
