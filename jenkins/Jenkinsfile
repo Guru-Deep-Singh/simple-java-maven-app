@@ -1,33 +1,23 @@
 pipeline {
-    agent any
-    environment {
-        JAVA_HOME  = "${tool 'JDK_21'}"          // must now resolve to the Temurin 21 install
-        MAVEN_HOME = "${tool 'Maven_3.9.9'}"
-        PATH       = "${MAVEN_HOME}/bin:${JAVA_HOME}/bin:${env.PATH}"
+  agent any
+  tools {
+    jdk   'JDK_21'        // must match the NAME in your screenshot
+    maven 'Maven_3.9.9'   // name must match exactly (version 3.9.11 is fine)
+  }
+  options { skipStagesAfterUnstable() }
+  stages {
+    stage('Env sanity') {
+      steps {
+        sh '''
+          echo "JAVA_HOME=$JAVA_HOME"
+          echo "MAVEN_HOME=$MAVEN_HOME"
+          which java && java -version
+          which mvn  && mvn -version
+        '''
+      }
     }
-    options {
-        skipStagesAfterUnstable()
-    }
-    stages {
-        stage('Build') {
-            steps {
-                sh 'mvn -B -DskipTests clean package'
-            }
-        }
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
-            }
-        }
-        stage('Deliver') { 
-            steps {
-                sh './jenkins/scripts/deliver.sh' 
-            }
-        }
-    }
+    stage('Build')  { steps { sh 'mvn -B -DskipTests clean package' } }
+    stage('Test')   { steps { sh 'mvn test' ; junit 'target/surefire-reports/*.xml' } }
+    stage('Deliver'){ steps { sh './jenkins/scripts/deliver.sh' } }
+  }
 }
